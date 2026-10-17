@@ -13,7 +13,8 @@ class {class_name}Conan(ConanFile):
     name = "{package_name}"
     version = "{version}"
     package_type = "library"
-    python_requires = "rp_externals_base/[>=0.1.0 <0.2.0]"
+    use_git_version = False
+    python_requires = "rp_externals_base/[>=0.1.0 <0.2.0, include_prerelease]"
     python_requires_extend = "rp_externals_base.RpExternalsBase"
 
     settings = "os", "arch", "compiler", "build_type"

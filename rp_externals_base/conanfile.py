@@ -1,4 +1,6 @@
+import re
 from pathlib import Path
+from conan.tools.scm import Git
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
@@ -11,9 +13,9 @@ from conan.tools.meson import MesonToolchain
 
 class RpExternalsBase(ConanFile):
     name = "rp_externals_base"
-    version = "0.1.0"
     package_type = "python-require"
     exports = "CMakeLists.txt"
+    use_git_version = True
 
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False]}
@@ -25,6 +27,28 @@ class RpExternalsBase(ConanFile):
     def requirements(self):
         for ref in self.rp_depends:
             self.requires(ref)
+
+    def set_version(self):
+        # 第三方库的版本按releasetag，externals的基类版本按SemVer规范生成，便于区分
+        if not self.use_git_version:
+            return
+
+        git = Git(self)
+        assert self.recipe_folder is not None
+        version_file = Path(self.recipe_folder).parent / "VERSION"
+        base = version_file.read_text(encoding="utf-8").strip() if version_file.exists() else "0.1.0"
+        count = git.run("rev-list --count HEAD")
+        git_hash = git.run("rev-parse --short HEAD")
+        tags = git.run("tag --points-at HEAD")
+        is_rel = any(re.match(r"^(release|main)/", tag) for tag in tags.splitlines())
+        is_dirty = git.is_dirty()
+        dev = f"-dev.{count}" if is_dirty or not is_rel else ""
+        dirty = ".dirty" if is_dirty else ""
+        # SemVer规范: https://semver.org/lang/zh-CN/
+        # 上述代码生成的版本号示例：
+        # 开发版本 0.1.0-dev.1+a1b2c3d4.dirty
+        # 发布版本 0.1.0+a1b2c3d4
+        self.version = f"{base}{dev}+{git_hash}{dirty}"
 
     # 单片机只能使用静态库，不能使用动态库
     def validate(self):

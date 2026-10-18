@@ -8,13 +8,20 @@
 
 ## 2. 基本使用方法
 1. 创建rp_externals_base包
+
 ~~~shell
 cd ./rp_externals_base
-conan create . -pr XXX
+conan create # 不必指定特定的profile，通用制品
 conan list # 查看是否有构建出来的包
 ~~~
+
 2. 构建外部库
 ~~~shell
 python ./scripts/generate_conanfiles.py # 给所有的外部库生成conanfile
-python ./scripts/build_externals.py # 默认构建所有外部库
+python ./scripts/build_externals.py -pr XXXX # 默认构建所有外部库
 ~~~
+
+## 3. 新第三方库适配
+1. 在package文件夹下按照{库名}-{版本号}的规范创建文件夹
+2. 为外部库写recipe.cmake
+3. 重新生成conanfile.py

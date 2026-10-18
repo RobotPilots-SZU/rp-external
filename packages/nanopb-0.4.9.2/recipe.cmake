@@ -2,10 +2,10 @@ set(package_name "nanopb")
 set(${package_name}_DEPEND_PACKAGES "")
 set(${package_name}_INCLUDEDIRS "include/nanopb")
 
-if(RP_EXTERNALS_SHARED)
-    set(nanopb_static OFF)
-else()
+if(MCU_PLATFORM)
     set(nanopb_static ON)
+else()
+    set(nanopb_static OFF)
 endif()
 
 ExternalProject_Add(${package_name}

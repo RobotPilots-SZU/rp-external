@@ -19,7 +19,6 @@ class RpExternalsBase(ConanFile):
 
     settings = "os", "arch", "compiler", "build_type"
     options = {"shared": [True, False]}
-    default_options = {"shared": True}
 
     rp_depends = ()
     rp_includedirs = ("include",)
@@ -51,9 +50,11 @@ class RpExternalsBase(ConanFile):
         self.version = f"{base}{dev}+{git_hash}{dirty}"
 
     # 单片机只能使用静态库，不能使用动态库
-    def validate(self):
-        if self.settings.os == "baremetal" and self.options.shared:
-            raise ConanInvalidConfiguration("Bare-metal packages require shared=False")
+    def configure(self):
+        if self.settings.os == "baremetal":
+            self.options.shared = False
+        else:
+            self.options.shared = True
 
     def layout(self):
         cmake_layout(self)
@@ -82,7 +83,7 @@ class RpExternalsBase(ConanFile):
             Path(self.build_folder) / "staging"
         ).as_posix()
 
-        toolchain.variables["RP_EXTERNALS_SHARED"] = bool(self.options.shared)
+        toolchain.variables["MCU_PLATFORM"] = bool(self.settings.os == "baremetal")
         toolchain.variables["RP_CMAKE_TOOLCHAIN_FILE"] = (
             generators / toolchain.filename
         ).as_posix()

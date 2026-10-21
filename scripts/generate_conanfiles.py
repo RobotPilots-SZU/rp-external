@@ -12,7 +12,7 @@ from conan import ConanFile
 class {class_name}Conan(ConanFile):
     name = "{package_name}"
     version = "{version}"
-    package_type = "library"
+    package_type = "{package_type}"
     use_git_version = False
     python_requires = "rp_externals_base/[>=0.1.0 <0.2.0, include_prerelease]"
     python_requires_extend = "rp_externals_base.RpExternalsBase"
@@ -65,7 +65,9 @@ def parse_package_list(text: str, suffix: str, default: tuple[str, ...] = ()) ->
     return tuple(item for value in values for item in value.split(";") if item)
 
 
-def parse_recipe_cmake(recipe_file: Path) -> tuple[str | None, list[str], tuple[str, ...]]:
+def parse_recipe_cmake(recipe_file: Path) -> tuple[
+    str | None, list[str], tuple[str, ...], str
+]:
     text = recipe_file.read_text(encoding="utf-8")
     # 只解析约定的元数据；去掉注释时保留引号内的内容。
     text = re.sub(
@@ -75,9 +77,13 @@ def parse_recipe_cmake(recipe_file: Path) -> tuple[str | None, list[str], tuple[
     )
     match = re.search(r'set\s*\(\s*package_name\s+"([^"\n]+)"\s*\)', text, re.IGNORECASE)
     name = match.group(1) if match else None
+    match = re.search(
+        r'set\s*\(\s*LIBRARY_TYPE\s+"([^"\n]+)"\s*\)', text, re.IGNORECASE
+    )
+    package_type = match.group(1) if match else "library"
     depends = list(parse_package_list(text, "DEPEND_PACKAGES"))
     includedirs = parse_package_list(text, "INCLUDEDIRS", ("include",))
-    return name, depends, includedirs
+    return name, depends, includedirs, package_type
 
 
 def format_depends_tuple(depends: list[str], packages: dict[str, Path], owner: str) -> str:
@@ -92,7 +98,7 @@ def generate(packages: dict[str, Path]) -> int:
     for reference, folder in packages.items():
         try:
             name, version = reference.split("/", 1)
-            recipe_name, depends, includedirs = parse_recipe_cmake(
+            recipe_name, depends, includedirs, package_type = parse_recipe_cmake(
                 folder / "recipe.cmake"
             )
             if recipe_name and recipe_name != name:
@@ -107,6 +113,7 @@ def generate(packages: dict[str, Path]) -> int:
                 ),
                 package_name=name,
                 version=version,
+                package_type=package_type,
                 depends_tuple=format_depends_tuple(depends, packages, reference),
                 includedirs_tuple=repr(includedirs),
             )

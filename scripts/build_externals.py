@@ -55,7 +55,7 @@ def discover_libraries() -> LibraryGraph:
 
     for reference, folder in packages.items():
         try:
-            _, depends, _ = parse_recipe_cmake(folder / "recipe.cmake")
+            _, depends, _, _ = parse_recipe_cmake(folder / "recipe.cmake")
             missing = [
                 dependency
                 for dependency in depends

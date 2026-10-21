@@ -1,6 +1,7 @@
 set(package_name "nanopb")
 set(${package_name}_DEPEND_PACKAGES "")
 set(${package_name}_INCLUDEDIRS "include/nanopb")
+set(LIBRARY_TYPE "library")
 
 if(MCU_PLATFORM)
     set(nanopb_static ON)
